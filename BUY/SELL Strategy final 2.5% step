@@ -1,0 +1,113 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © svatvlad1993
+
+//@version=5
+
+strategy("test for more freq","BUY/SELL final 2,5% step",pyramiding=100 , overlay=true, currency=currency.USDT, commission_type=strategy.commission.percent,
+     commission_value=0.05,initial_capital=5000, margin_long=10, margin_short=10, max_lines_count = 500, max_labels_count = 500, max_bars_back = 5000)//, default_qty_type=strategy.percent_of_equity, default_qty_value=4)
+
+
+// tail-resistance for buy
+
+var last_min = low[0]
+var last_max = high[0]
+
+var permission_for_buy = 0
+
+lowest0 = ta.lowest(low,100)
+highest0 = ta.highest(high,100)
+
+if close > last_max
+    if lowest0 != 0
+        last_min := lowest0
+    else
+        last_min := close - (close * 0.02)
+    last_max := high
+    permission_for_buy := 1
+    
+if close < last_min
+    last_min := low
+    if highest0 != 0
+        last_max := highest0
+    else
+        last_max := close + (close * 0.02)
+    permission_for_buy := 0
+
+
+
+plot_diaps1 = plot(permission_for_buy != 0? na : last_max, title='Max',color=color.new(#ff0000, 95),style=plot.style_cross,trackprice=true )
+plot_diaps2 = plot(permission_for_buy != 0? na : last_min, title='Min',color=color.new(#ff0000, 95),style=plot.style_cross,trackprice=true )
+
+plot_diaps3 = plot(permission_for_buy != 1? na : last_max, title='max',color=color.new(color.green, 95),style=plot.style_cross,trackprice=true )
+plot_diaps4 = plot(permission_for_buy != 1? na : last_min, title='min',color=color.new(color.green, 95),style=plot.style_cross,trackprice=true )
+
+fill(plot_diaps1, plot_diaps2,color=color.new(#ff0000, 70))
+fill(plot_diaps3, plot_diaps4,color=color.new(color.green, 70))
+
+
+//Supertrend
+
+atrPeriod = input(10, "ATR Length")
+factor = input.float(4, "Factor", step = 0.01)
+
+[supertrend, direction] = ta.supertrend(factor, atrPeriod)
+
+bodyMiddle = plot((open + close) / 2, display=display.none)
+upTrend = plot(direction < 0 ? supertrend : na, "Up Trend", color = color.teal, style=plot.style_linebr)
+downTrend = plot(direction < 0? na : supertrend, "Down Trend", color = color.maroon, style=plot.style_linebr)
+
+fill(bodyMiddle, upTrend, color.new(color.teal, 50), fillgaps=false)
+fill(bodyMiddle, downTrend, color.new(color.maroon, 50), fillgaps=false)
+
+
+// levels sell/buy
+
+var float[] price_to_sellBue = array.from(0.615, 0.63, 0.646, 0.662, 0.679, 0.696, 0.713, 0.731, 0.749, 0.768, 0.787, 0.807, 0.827, 0.848, 0.869, 0.891, 0.913, 0.936, 0.959, 0.983, 1.008, 1.033, 1.059, 1.085, 1.112, 1.14, 1.169, 1.198, 1.228, 1.259, 1.29, 1.322, 1.355, 1.389, 1.424, 1.46, 1.496, 1.533, 1.572, 1.611, 1.651, 1.693, 1.735, 1.778, 1.823, 1.868, 1.915, 1.963, 2.012, 2.062, 2.114, 2.167, 2.221, 2.276, 2.333, 2.392, 2.451, 2.513, 2.575, 2.64, 2.706, 2.774, 2.843, 2.914, 2.987, 3.061, 3.138, 3.216, 3.297, 3.379, 3.464, 3.55, 3.639, 3.73, 3.823, 3.919, 4.017, 4.117, 4.22, 4.326, 4.434, 4.545, 4.658, 4.775, 4.894, 5.017, 5.142, 5.27, 5.402, 5.537, 5.676, 5.818, 5.963, 6.112, 6.265, 6.422, 6.582, 6.747, 6.915, 7.088, 7.265, 7.447, 7.633, 7.824, 8.02, 8.22, 8.426, 8.636, 8.852, 9.074, 9.3, 9.533, 9.771, 10.015, 10.266, 10.523, 10.786, 11.055, 11.332, 11.615, 11.905, 12.203, 12.508, 12.821, 13.141, 13.47, 13.806, 14.152, 14.505, 14.868, 15.24, 15.621, 16.011, 16.412, 16.822, 17.242, 17.673, 18.115, 18.568, 19.032, 19.508, 19.996, 20.496, 21.008, 21.533, 22.072, 22.623, 23.189, 23.769, 24.363, 24.972, 25.596, 26.236, 26.892, 27.565, 28.254, 28.96, 29.684, 30.426, 31.187, 31.966, 32.766, 33.585, 34.424, 35.285, 36.167, 37.071, 37.998, 38.948, 39.922, 40.92, 41.943, 42.991, 44.066, 45.168, 46.297, 47.454, 48.641, 49.857, 51.103)
+var float[] count_of_orders = array.from(2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)
+
+
+//loops for sale/buy
+
+
+
+for i = 0 to 179
+    if array.get(price_to_sellBue, i) >= open[0] and array.get(price_to_sellBue, i) <= close[0] and
+     direction[0] < 0 and permission_for_buy != 0
+        if array.get(count_of_orders, i) > 0
+            strategy.order(str.tostring(i), strategy.long, 11)
+            g = array.get(count_of_orders, i)
+            array.set(count_of_orders, i, g - 2)
+            break
+
+
+
+var buy_price_for_count1 = 0.0
+var buy_price_for_count2 = 0.0
+var diff_beet = 0.0
+
+
+
+
+
+
+
+
+var SELL_amount = 0
+var strategy_short = 0
+for i = 0 to 179
+    if array.get(price_to_sellBue, i) <= open[0] and array.get(price_to_sellBue, i) >= close[0]
+        for j = 0 to i-1 
+            if array.get(count_of_orders, j) != 2
+                strategy_short := strategy_short + 1
+                array.set(count_of_orders, j, 2)
+                SELL_amount := SELL_amount + 11
+        strategy.order(str.tostring(strategy_short),strategy.short, SELL_amount)
+        SELL_amount := 0
+        break
+
+
+
+
+
+
+plot(strategy.equity)
