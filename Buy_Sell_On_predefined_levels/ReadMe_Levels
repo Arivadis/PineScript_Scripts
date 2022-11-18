@@ -1,0 +1,5 @@
+Use this script with predefined diapason of price for every coin separately.
+
+This one is OK for ALICE/USDT.
+If You want to use with the different coin, check its low/high price for some period and put levels in
+indicator/strategy with some step(3% for example)
